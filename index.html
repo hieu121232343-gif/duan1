@@ -1,83 +1,232 @@
 <!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-  </head>
-  <body></body>
-</html>
 <html>
   <head>
-    <title>Order Quán Ăn</title>
     <meta charset="utf-8" />
+    <title>Simple Restaurant Order</title>
     <style>
       body {
         font-family: Arial;
+        padding: 16px;
+        background: #f7f7f7;
       }
-      .menu {
+      h2 {
+        margin-top: 24px;
+      }
+      .container {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
       }
-      .item {
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 10px;
+      .menu,
+      .table-box {
+        background: #fff;
+        padding: 14px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #ddd;
+        padding: 6px;
+      }
+      .total {
+        font-weight: bold;
+        text-align: right;
+        margin-top: 8px;
       }
       button {
         padding: 6px 10px;
         border-radius: 8px;
+        border: 0;
         cursor: pointer;
+      }
+      .add {
+        background: #4caf50;
+        color: #fff;
+      }
+      .clear {
+        background: #e53935;
+        color: #fff;
       }
     </style>
   </head>
+
   <body>
-    <h2>Menu Món Ăn</h2>
+    <h1>Web Order Quán Ăn</h1>
 
-    <div class="menu" id="menu"></div>
+    <div class="container">
+      <!-- MENU -->
+      <div class="menu">
+        <h2>Menu</h2>
 
-    <h3>Giỏ hàng</h3>
-    <ul id="cart"></ul>
-    <button onclick="checkout()">Đặt hàng</button>
+        <table>
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Món</th>
+              <th>Giá (¥)</th>
+            </tr>
+          </thead>
+          <tbody id="menuBody"></tbody>
+        </table>
+
+        <h3>Thêm vào bàn</h3>
+        <label
+          >Bàn:
+          <select id="tableSelect">
+            <option value="1">Bàn 1</option>
+            <option value="2">Bàn 2</option>
+            <option value="3">Bàn 3</option>
+          </select>
+        </label>
+
+        <br /><br />
+
+        <label
+          >Món:
+          <select id="dishSelect"></select>
+        </label>
+
+        <label
+          >Số lượng:
+          <input id="qtyInput" type="number" value="1" min="1" />
+        </label>
+
+        <button class="add" onclick="addOrder()">Thêm món</button>
+      </div>
+
+      <!-- BÀN 1 -->
+      <div class="table-box">
+        <h2>Bàn 1</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Món</th>
+              <th>SL</th>
+              <th>Giá</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody id="table1"></tbody>
+        </table>
+        <div class="total" id="total1">Tổng: 0 ¥</div>
+        <button class="clear" onclick="clearTable(1)">Xóa bàn 1</button>
+      </div>
+
+      <!-- BÀN 2 -->
+      <div class="table-box">
+        <h2>Bàn 2</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Món</th>
+              <th>SL</th>
+              <th>Giá</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody id="table2"></tbody>
+        </table>
+        <div class="total" id="total2">Tổng: 0 ¥</div>
+        <button class="clear" onclick="clearTable(2)">Xóa bàn 2</button>
+      </div>
+
+      <!-- BÀN 3 -->
+      <div class="table-box">
+        <h2>Bàn 3</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Món</th>
+              <th>SL</th>
+              <th>Giá</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody id="table3"></tbody>
+        </table>
+        <div class="total" id="total3">Tổng: 0 ¥</div>
+        <button class="clear" onclick="clearTable(3)">Xóa bàn 3</button>
+      </div>
+    </div>
 
     <script>
-      const menuData = [
-        { id: 1, name: "Cơm gà", price: 45000 },
-        { id: 2, name: "Bún bò", price: 40000 },
-        { id: 3, name: "Trà tắc", price: 15000 },
+      const menu = [
+        { id: "M01", name: "Phở bò", price: 900 },
+        { id: "M02", name: "Bún chả", price: 850 },
+        { id: "M03", name: "Cơm tấm", price: 800 },
+        { id: "M04", name: "Trà đá", price: 100 },
       ];
 
-      const cart = [];
+      const tables = { 1: [], 2: [], 3: [] };
 
-      const menuDiv = document.getElementById("menu");
-      menuData.forEach((item) => {
-        menuDiv.innerHTML += `
-    <div class="item">
-      <h4>${item.name}</h4>
-      <p>${item.price} đ</p>
-      <button onclick="addToCart(${item.id})">Thêm</button>
-    </div>
-  `;
-      });
+      function renderMenu() {
+        const menuBody = document.getElementById("menuBody");
+        const dishSelect = document.getElementById("dishSelect");
+        menuBody.innerHTML = "";
+        dishSelect.innerHTML = "";
 
-      function addToCart(id) {
-        const item = menuData.find((m) => m.id === id);
-        cart.push(item);
-        renderCart();
-      }
-
-      function renderCart() {
-        const c = document.getElementById("cart");
-        c.innerHTML = "";
-        cart.forEach((i) => {
-          c.innerHTML += `<li>${i.name} - ${i.price} đ</li>`;
+        menu.forEach((m) => {
+          menuBody.innerHTML += `
+      <tr><td>${m.id}</td><td>${m.name}</td><td>${m.price}</td></tr>
+    `;
+          dishSelect.innerHTML += `
+      <option value="${m.id}">${m.name} (${m.price}¥)</option>
+    `;
         });
       }
 
-      function checkout() {
-        window.location.href = "checkout.html";
+      function addOrder() {
+        const tid = document.getElementById("tableSelect").value;
+        const dishId = document.getElementById("dishSelect").value;
+        const qty = parseInt(document.getElementById("qtyInput").value);
+        const dish = menu.find((m) => m.id === dishId);
+
+        const existing = tables[tid].find((i) => i.id === dishId);
+        if (existing) {
+          existing.qty += qty;
+        } else {
+          tables[tid].push({ ...dish, qty });
+        }
+        renderTable(tid);
       }
+
+      function renderTable(tid) {
+        const body = document.getElementById("table" + tid);
+        const totalBox = document.getElementById("total" + tid);
+        body.innerHTML = "";
+        let total = 0;
+
+        tables[tid].forEach((item) => {
+          const sum = item.qty * item.price;
+          total += sum;
+          body.innerHTML += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.qty}</td>
+        <td>${item.price}</td>
+        <td>${sum}</td>
+      </tr>
+    `;
+        });
+
+        totalBox.textContent = `Tổng: ${total} ¥`;
+      }
+
+      function clearTable(tid) {
+        tables[tid] = [];
+        renderTable(tid);
+      }
+
+      renderMenu();
+      renderTable(1);
+      renderTable(2);
+      renderTable(3);
     </script>
   </body>
 </html>
