@@ -2,27 +2,24 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Simple Restaurant Order</title>
+    <title>Restaurant QR Order</title>
+
     <style>
       body {
         font-family: Arial;
         padding: 16px;
-        background: #f7f7f7;
+        background: #f5f5f5;
       }
+      h1,
       h2 {
-        margin-top: 24px;
+        margin: 8px 0;
       }
-      .container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-      }
-      .menu,
-      .table-box {
+      .card {
         background: #fff;
         padding: 14px;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        border-radius: 14px;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+        margin-bottom: 16px;
       }
       table {
         width: 100%;
@@ -53,109 +50,60 @@
         background: #e53935;
         color: #fff;
       }
+      .badge {
+        padding: 3px 8px;
+        background: #1976d2;
+        color: #fff;
+        border-radius: 8px;
+      }
     </style>
   </head>
 
   <body>
-    <h1>Web Order Quán Ăn</h1>
+    <h1 id="pageTitle">QR Order</h1>
 
-    <div class="container">
-      <!-- MENU -->
-      <div class="menu">
-        <h2>Menu</h2>
+    <div id="tableMode" style="display: none" class="card">
+      <h2>Đặt món — <span class="badge" id="tableName"></span></h2>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Mã</th>
-              <th>Món</th>
-              <th>Giá (¥)</th>
-            </tr>
-          </thead>
-          <tbody id="menuBody"></tbody>
-        </table>
+      <label
+        >Món:
+        <select id="dishSelect"></select>
+      </label>
 
-        <h3>Thêm vào bàn</h3>
-        <label
-          >Bàn:
-          <select id="tableSelect">
-            <option value="1">Bàn 1</option>
-            <option value="2">Bàn 2</option>
-            <option value="3">Bàn 3</option>
-          </select>
-        </label>
+      <label
+        >Số lượng:
+        <input id="qtyInput" type="number" value="1" min="1" />
+      </label>
 
-        <br /><br />
+      <button class="add" onclick="addOrder()">Thêm món</button>
 
-        <label
-          >Món:
-          <select id="dishSelect"></select>
-        </label>
+      <table>
+        <thead>
+          <tr>
+            <th>Món</th>
+            <th>SL</th>
+            <th>Giá</th>
+            <th>Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
 
-        <label
-          >Số lượng:
-          <input id="qtyInput" type="number" value="1" min="1" />
-        </label>
+      <div class="total" id="tableTotal">Tổng: 0 ¥</div>
 
-        <button class="add" onclick="addOrder()">Thêm món</button>
-      </div>
+      <button class="clear" onclick="clearTable()">Xóa toàn bộ đơn</button>
+    </div>
 
-      <!-- BÀN 1 -->
-      <div class="table-box">
-        <h2>Bàn 1</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Món</th>
-              <th>SL</th>
-              <th>Giá</th>
-              <th>Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody id="table1"></tbody>
-        </table>
-        <div class="total" id="total1">Tổng: 0 ¥</div>
-        <button class="clear" onclick="clearTable(1)">Xóa bàn 1</button>
-      </div>
-
-      <!-- BÀN 2 -->
-      <div class="table-box">
-        <h2>Bàn 2</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Món</th>
-              <th>SL</th>
-              <th>Giá</th>
-              <th>Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody id="table2"></tbody>
-        </table>
-        <div class="total" id="total2">Tổng: 0 ¥</div>
-        <button class="clear" onclick="clearTable(2)">Xóa bàn 2</button>
-      </div>
-
-      <!-- BÀN 3 -->
-      <div class="table-box">
-        <h2>Bàn 3</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Món</th>
-              <th>SL</th>
-              <th>Giá</th>
-              <th>Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody id="table3"></tbody>
-        </table>
-        <div class="total" id="total3">Tổng: 0 ¥</div>
-        <button class="clear" onclick="clearTable(3)">Xóa bàn 3</button>
-      </div>
+    <div id="kitchenMode" style="display: none" class="card">
+      <h2>👩‍🍳 Trang Bếp — Tất cả bàn</h2>
+      <div id="kitchenContainer"></div>
+      <button class="clear" onclick="clearAll()">
+        Xóa toàn bộ đơn tất cả bàn
+      </button>
     </div>
 
     <script>
+      // ====== MENU ======
       const menu = [
         { id: "M01", name: "Phở bò", price: 900 },
         { id: "M02", name: "Bún chả", price: 850 },
@@ -163,46 +111,61 @@
         { id: "M04", name: "Trà đá", price: 100 },
       ];
 
-      const tables = { 1: [], 2: [], 3: [] };
+      // ====== DATA STORAGE ======
+      const defaultTables = { 1: [], 2: [], 3: [] };
 
-      function renderMenu() {
-        const menuBody = document.getElementById("menuBody");
-        const dishSelect = document.getElementById("dishSelect");
-        menuBody.innerHTML = "";
-        dishSelect.innerHTML = "";
+      function loadOrders() {
+        return JSON.parse(
+          localStorage.getItem("orders") || JSON.stringify(defaultTables)
+        );
+      }
+      function saveOrders(data) {
+        localStorage.setItem("orders", JSON.stringify(data));
+      }
 
+      let orders = loadOrders();
+
+      // ====== URL MODE DETECT ======
+      const params = new URLSearchParams(location.search);
+      const tableId = params.get("table");
+      const isKitchen = params.get("kitchen");
+
+      // ====== RENDER MENU SELECT ======
+      function renderDishSelect() {
+        const sel = document.getElementById("dishSelect");
+        sel.innerHTML = "";
         menu.forEach((m) => {
-          menuBody.innerHTML += `
-      <tr><td>${m.id}</td><td>${m.name}</td><td>${m.price}</td></tr>
-    `;
-          dishSelect.innerHTML += `
-      <option value="${m.id}">${m.name} (${m.price}¥)</option>
-    `;
+          sel.innerHTML += `<option value="${m.id}">${m.name} (${m.price}¥)</option>`;
         });
       }
 
+      // ====== TABLE MODE ======
       function addOrder() {
-        const tid = document.getElementById("tableSelect").value;
         const dishId = document.getElementById("dishSelect").value;
         const qty = parseInt(document.getElementById("qtyInput").value);
         const dish = menu.find((m) => m.id === dishId);
 
-        const existing = tables[tid].find((i) => i.id === dishId);
-        if (existing) {
-          existing.qty += qty;
+        const list = orders[tableId];
+        const exist = list.find((i) => i.id === dishId);
+
+        if (exist) {
+          exist.qty += qty;
         } else {
-          tables[tid].push({ ...dish, qty });
+          list.push({ ...dish, qty });
         }
-        renderTable(tid);
+
+        saveOrders(orders);
+        renderTable();
+        if (isKitchen) renderKitchen();
       }
 
-      function renderTable(tid) {
-        const body = document.getElementById("table" + tid);
-        const totalBox = document.getElementById("total" + tid);
+      function renderTable() {
+        const body = document.getElementById("tableBody");
+        const totalBox = document.getElementById("tableTotal");
         body.innerHTML = "";
         let total = 0;
 
-        tables[tid].forEach((item) => {
+        orders[tableId].forEach((item) => {
           const sum = item.qty * item.price;
           total += sum;
           body.innerHTML += `
@@ -218,15 +181,75 @@
         totalBox.textContent = `Tổng: ${total} ¥`;
       }
 
-      function clearTable(tid) {
-        tables[tid] = [];
-        renderTable(tid);
+      function clearTable() {
+        orders[tableId] = [];
+        saveOrders(orders);
+        renderTable();
+        if (isKitchen) renderKitchen();
       }
 
-      renderMenu();
-      renderTable(1);
-      renderTable(2);
-      renderTable(3);
+      // ====== KITCHEN MODE ======
+      function renderKitchen() {
+        const box = document.getElementById("kitchenContainer");
+        box.innerHTML = "";
+
+        Object.keys(orders).forEach((id) => {
+          let total = 0;
+          let rows = "";
+
+          orders[id].forEach((item) => {
+            const sum = item.qty * item.price;
+            total += sum;
+            rows += `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${item.price}</td>
+          <td>${sum}</td>
+        </tr>
+      `;
+          });
+
+          box.innerHTML += `
+      <div class="card">
+        <h3>Bàn ${id}</h3>
+        <table>
+          <thead>
+            <tr><th>Món</th><th>SL</th><th>Giá</th><th>Thành tiền</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="total">Tổng: ${total} ¥</div>
+      </div>
+    `;
+        });
+      }
+
+      function clearAll() {
+        orders = JSON.parse(JSON.stringify(defaultTables));
+        saveOrders(orders);
+        if (tableId) renderTable();
+        renderKitchen();
+      }
+
+      // ====== INIT ======
+      renderDishSelect();
+
+      if (tableId) {
+        // TABLE UI
+        document.getElementById("tableMode").style.display = "block";
+        document.getElementById("tableName").textContent = "Bàn " + tableId;
+        document.getElementById("pageTitle").textContent =
+          "Order — Bàn " + tableId;
+        renderTable();
+      }
+
+      if (isKitchen) {
+        // KITCHEN UI
+        document.getElementById("kitchenMode").style.display = "block";
+        document.getElementById("pageTitle").textContent = "Trang bếp";
+        renderKitchen();
+      }
     </script>
   </body>
 </html>
