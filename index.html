@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body></body>
+</html>
+<html>
+  <head>
+    <title>Order Quán Ăn</title>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: Arial;
+      }
+      .menu {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .item {
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      button {
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Menu Món Ăn</h2>
+
+    <div class="menu" id="menu"></div>
+
+    <h3>Giỏ hàng</h3>
+    <ul id="cart"></ul>
+    <button onclick="checkout()">Đặt hàng</button>
+
+    <script>
+      const menuData = [
+        { id: 1, name: "Cơm gà", price: 45000 },
+        { id: 2, name: "Bún bò", price: 40000 },
+        { id: 3, name: "Trà tắc", price: 15000 },
+      ];
+
+      const cart = [];
+
+      const menuDiv = document.getElementById("menu");
+      menuData.forEach((item) => {
+        menuDiv.innerHTML += `
+    <div class="item">
+      <h4>${item.name}</h4>
+      <p>${item.price} đ</p>
+      <button onclick="addToCart(${item.id})">Thêm</button>
+    </div>
+  `;
+      });
+
+      function addToCart(id) {
+        const item = menuData.find((m) => m.id === id);
+        cart.push(item);
+        renderCart();
+      }
+
+      function renderCart() {
+        const c = document.getElementById("cart");
+        c.innerHTML = "";
+        cart.forEach((i) => {
+          c.innerHTML += `<li>${i.name} - ${i.price} đ</li>`;
+        });
+      }
+
+      function checkout() {
+        window.location.href = "checkout.html";
+      }
+    </script>
+  </body>
+</html>
